@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Multi-Event Countdown</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    input, textarea, select, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+    }
+    .events {
+      margin-top: 30px;
+    }
+    .event {
+      background: #fff;
+      border-left: 5px solid #007bff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      position: relative;
+    }
+    .event[data-category="Birthday"] { border-left-color: #ff69b4; }
+    .event[data-category="Meeting"] { border-left-color: #28a745; }
+    .event[data-category="Holiday"] { border-left-color: #ffc107; }
+    .event[data-category="Custom"] { border-left-color: #6f42c1; }
+    .event h3 {
+      margin: 0 0 10px;
+    }
+    .event-actions {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+    }
+    .event-actions button {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dynamic Multi-Event Countdown</h1>
+  <form id="eventForm">
+    <input type="text" id="title" placeholder="Event Title" required />
+    <textarea id="description" placeholder="Event Description"></textarea>
+    <input type="datetime-local" id="datetime" required />
+    <input type="email" id="email" placeholder="Email for Reminder (optional)" />
+    <select id="category" required>
+      <option value="Birthday">Birthday</option>
+      <option value="Meeting">Meeting</option>
+      <option value="Holiday">Holiday</option>
+      <option value="Custom">Custom</option>
+    </select>
+    <button type="submit">Add Event</button>
+  </form>
+
+  <div class="events" id="eventsContainer"></div>
+
+  <script>
+    const eventForm = document.getElementById("eventForm");
+    const eventsContainer = document.getElementById("eventsContainer");
+    let events = JSON.parse(localStorage.getItem("events")) || [];
+
+    function saveEvents() {
+      localStorage.setItem("events", JSON.stringify(events));
+    }
+
+    function formatCountdown(timeDiff) {
+      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((timeDiff / (1000 * 60)) % 60);
+      const seconds = Math.floor((timeDiff / 1000) % 60);
+      return `${days} Days ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function renderEvents() {
+      eventsContainer.innerHTML = "";
+      const now = new Date();
+
+      events.forEach((event, index) => {
+        const eventTime = new Date(event.datetime);
+        const timeDiff = eventTime - now;
+        const reminderTime = new Date(eventTime.getTime() - 24 * 60 * 60 * 1000);
+
+        if (!event.reminded && now >= reminderTime && now < eventTime && event.email) {
+          console.log(`Reminder: '${event.title}' is happening tomorrow. Email sent to: ${event.email}`);
+          alert(`Reminder: '${event.title}' is happening tomorrow. Check your email.`);
+          event.reminded = true;
+          saveEvents();
+        }
+
+        let countdownText = "";
+        if (timeDiff > 0) {
+          countdownText = formatCountdown(timeDiff);
+        } else {
+          countdownText = `🎉 ${event.title} is happening now!`;
+        }
+
+        const eventEl = document.createElement("div");
+        eventEl.className = "event";
+        eventEl.setAttribute("data-category", event.category);
+        eventEl.innerHTML = `
+          <div class="event-actions">
+            <button onclick="editEvent(${index})">Edit</button>
+            <button onclick="deleteEvent(${index})">Delete</button>
+          </div>
+          <h3>${event.title}</h3>
+          <p>${event.description || "No description."}</p>
+          <p><strong>Countdown:</strong> <span id="timer-${index}">${countdownText}</span></p>
+          <p><strong>Category:</strong> ${event.category}</p>
+          ${event.email ? `<p><strong>Reminder Email:</strong> ${event.email}</p>` : ""}
+        `;
+        eventsContainer.appendChild(eventEl);
+      });
+    }
+
+    function updateTimers() {
+      events.forEach((event, index) => {
+        const timerEl = document.getElementById(`timer-${index}`);
+        if (!timerEl) return;
+        const eventTime = new Date(event.datetime);
+        const now = new Date();
+        const diff = eventTime - now;
+        timerEl.textContent = diff > 0 ? formatCountdown(diff) : `🎉 ${event.title} is happening now!`;
+      });
+    }
+
+    function deleteEvent(index) {
+      if (confirm("Are you sure you want to delete this event?")) {
+        events.splice(index, 1);
+        saveEvents();
+        renderEvents();
+      }
+    }
+
+    function editEvent(index) {
+      const event = events[index];
+      document.getElementById("title").value = event.title;
+      document.getElementById("description").value = event.description;
+      document.getElementById("datetime").value = event.datetime;
+      document.getElementById("email").value = event.email;
+      document.getElementById("category").value = event.category;
+      events.splice(index, 1);
+      saveEvents();
+      renderEvents();
+    }
+
+    eventForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const datetime = document.getElementById("datetime").value;
+      const email = document.getElementById("email").value.trim();
+      const category = document.getElementById("category").value;
+
+      if (!title || !datetime || new Date(datetime) <= new Date()) {
+        alert("Please fill in all required fields and ensure the date is in the future.");
+        return;
+      }
+
+      events.push({ title, description, datetime, email, category, reminded: false });
+      saveEvents();
+      eventForm.reset();
+      renderEvents();
+    });
+
+    renderEvents();
+    setInterval(updateTimers, 1000);
+  </script>
+</body>
+</html>

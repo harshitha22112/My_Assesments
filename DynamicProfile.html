@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dynamic Profile Card Generator</title>
+<style>
+:root{
+  --card-bg:#ffffff;
+  --card-text:#222222;
+  --accent:#4f46e5;
+  --card-bg-dark:#1f2937;
+  --card-text-dark:#f3f4f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,Arial,sans-serif;}
+body{
+  background:#f1f5f9;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:2rem 1rem;
+  gap:2rem;
+}
+#cardForm{
+  background:#ffffff;
+  padding:1.5rem;
+  border-radius:0.75rem;
+  box-shadow:0 4px 8px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:640px;
+  display:grid;
+  gap:1rem;
+}
+#cardForm label{
+  font-weight:600;
+}
+#cardForm input[type="text"],
+#cardForm textarea,
+#cardForm select{
+  width:100%;
+  padding:0.5rem 0.75rem;
+  border:1px solid #cbd5e1;
+  border-radius:0.375rem;
+  font-size:1rem;
+}
+#cardForm textarea{resize:vertical;min-height:80px;}
+#cardForm button{
+  background:var(--accent);
+  color:#fff;
+  padding:0.6rem 1.2rem;
+  border:none;
+  border-radius:0.5rem;
+  font-size:1rem;
+  cursor:pointer;
+  transition:background 0.2s;
+}
+#cardForm button:hover{background:#050317;}
+.buttons{
+  display:flex;
+  gap:0.5rem;
+}
+#cardsContainer{
+  width:100%;
+  max-width:1024px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1.5rem;
+}
+.card{
+  background:var(--card-bg);
+  color:var(--card-text);
+  border-radius:1rem;
+  padding:1.5rem 1rem;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  animation:fadeInScale 0.4s ease forwards;
+  position:relative;
+}
+.card.dark{
+  background:var(--card-bg-dark);
+  color:var(--card-text-dark);
+}
+.card img{
+  width:120px;
+  height:120px;
+  object-fit:cover;
+  border:4px solid var(--accent);
+  margin-bottom:1rem;
+}
+.square img{border-radius:0.25rem;}
+.rounded img{border-radius:1rem;}
+.circle img{border-radius:50%;}
+.card h3{
+  font-size:1.25rem;
+  margin-bottom:0.5rem;
+}
+.card p{
+  text-align:center;
+  font-size:0.95rem;
+  line-height:1.4;
+}
+.controls{
+  margin-top:1rem;
+  display:flex;
+  gap:0.5rem;
+}
+.controls button{
+  background:transparent;
+  border:1px solid currentColor;
+  color:inherit;
+  padding:0.35rem 0.6rem;
+  border-radius:0.375rem;
+  cursor:pointer;
+  transition:background 0.2s, color 0.2s;
+}
+.controls button:hover{
+  background:var(--accent);
+  color:#fff;
+}
+@keyframes fadeInScale{
+  0%{opacity:0;transform:scale(0.9);}
+  100%{opacity:1;transform:scale(1);}
+}
+@media (max-width:480px){
+  #cardForm, .card{padding:1rem;}
+}
+</style>
+</head>
+<body>
+
+<h1>Dynamic Profile Card Generator</h1>
+
+<form id="cardForm">
+  <div>
+    <label for="name">Name</label>
+    <input id="name" type="text" placeholder="Enter name" required>
+  </div>
+  <div>
+    <label for="bio">Bio</label>
+    <textarea id="bio" placeholder="Short bio" required></textarea>
+  </div>
+  <div>
+    <label for="image">Profile Picture</label>
+    <input id="image" type="file" accept="image/*" required>
+  </div>
+  <div>
+    <label for="borderStyle">Border Style</label>
+    <select id="borderStyle">
+      <option value="square">Square</option>
+      <option value="rounded">Rounded</option>
+      <option value="circle">Circle</option>
+    </select>
+  </div>
+  <div class="buttons">
+    <button type="button" id="previewBtn">Preview</button>
+    <button type="submit" id="generateBtn">Generate Card</button>
+  </div>
+</form>
+<div id="previewArea"></div>
+<div id="cardsContainer"></div>
+<script>
+const form = document.getElementById('cardForm');
+const previewBtn = document.getElementById('previewBtn');
+const previewArea = document.getElementById('previewArea');
+const cardsContainer = document.getElementById('cardsContainer');
+
+let editingId = null; 
+const readImageAsDataURL = file => new Promise((res, rej)=>{
+  const reader = new FileReader();
+  reader.onload = () => res(reader.result);
+  reader.onerror = rej;
+  reader.readAsDataURL(file);
+});
+
+function saveCards(cards){
+  localStorage.setItem('profileCards', JSON.stringify(cards));
+}
+function loadCards(){
+  return JSON.parse(localStorage.getItem('profileCards')||'[]');
+}
+function createCardElement(card){
+  const cardEl = document.createElement('div');
+  cardEl.className = `card ${card.border} ${card.theme === 'dark' ? 'dark':''}`;
+  cardEl.dataset.id = card.id;
+  cardEl.innerHTML = `
+    <img src="${card.image}" alt="${card.name}">
+    <h3>${card.name}</h3>
+    <p>${card.bio}</p>
+    <div class="controls">
+      <button class="themeBtn">${card.theme === 'dark' ? 'Light' : 'Dark'}</button>
+      <button class="editBtn">Edit</button>
+      <button class="deleteBtn">Delete</button>
+    </div>
+  `;
+  // Event listeners
+  cardEl.querySelector('.themeBtn').addEventListener('click', ()=>{
+    card.theme = card.theme === 'light' ? 'dark':'light';
+    updateCard(card);
+  });
+  cardEl.querySelector('.deleteBtn').addEventListener('click', ()=>{
+    deleteCard(card.id);
+  });
+  cardEl.querySelector('.editBtn').addEventListener('click', ()=>{
+    loadCardIntoForm(card);
+  });
+  return cardEl;
+}
+function renderCards(){
+  cardsContainer.innerHTML = '';
+  loadCards().forEach(c=>{
+    cardsContainer.appendChild(createCardElement(c));
+  });
+}
+function updateCard(updated){
+  const cards = loadCards().map(c=> c.id === updated.id ? updated : c);
+  saveCards(cards);
+  renderCards();
+}
+function deleteCard(id){
+  const cards = loadCards().filter(c=> c.id !== id);
+  saveCards(cards);
+  renderCards();
+}
+function loadCardIntoForm(card){
+  document.getElementById('name').value = card.name;
+  document.getElementById('bio').value = card.bio;
+  document.getElementById('borderStyle').value = card.border;
+  editingId = card.id;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+previewBtn.addEventListener('click', async ()=>{
+  const name = form.name.value.trim();
+  const bio = form.bio.value.trim();
+  const border = form.borderStyle.value;
+  const file = form.image.files[0];
+  if(!name||!bio||!file){alert('Fill all fields & choose image');return;}
+  const imgData = await readImageAsDataURL(file);
+  const tempCard = {id:'preview',name,bio,image:imgData,border,theme:'light'};
+  previewArea.innerHTML = '';
+  previewArea.appendChild(createCardElement(tempCard));
+});
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = form.name.value.trim();
+  const bio = form.bio.value.trim();
+  const border = form.borderStyle.value;
+  let imgData;
+  if(editingId){
+    const file = form.image.files[0];
+    const cards = loadCards();
+    const card = cards.find(c=>c.id===editingId);
+    if(file){ imgData = await readImageAsDataURL(file);} else {imgData = card.image;}
+    card.name = name; card.bio = bio; card.border = border; card.image = imgData;
+    updateCard(card);
+    editingId = null;
+  }else{
+    const file = form.image.files[0];
+    if(!file){alert('Choose an image');return;}
+    imgData = await readImageAsDataURL(file);
+    const newCard = {
+      id: Date.now().toString(),
+      name,
+      bio,
+      image: imgData,
+      border,
+      theme:'light'
+    };
+    const cards = loadCards();
+    cards.push(newCard);
+    saveCards(cards);
+  }
+  form.reset();
+  previewArea.innerHTML='';
+  renderCards();
+});
+renderCards();
+</script>
+
+</body>
+</html>

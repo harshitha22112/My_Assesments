@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Event Countdown</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    h1 { text-align: center; }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .event-card {
+      background: white;
+      padding: 15px;
+      margin: 10px auto;
+      border-left: 6px solid;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    .event-card .title { font-weight: bold; font-size: 18px; }
+    .buttons {
+      margin-top: 10px;
+    }
+    .buttons button {
+      margin-right: 10px;
+    }
+    .category-Birthday { border-color: pink; }
+    .category-Meeting { border-color: lightgreen; }
+    .category-Holiday { border-color: orange; }
+    .category-Custom { border-color: lightblue; }
+  </style>
+</head>
+<body>
+  <h1>🕒 Multi-Event Countdown</h1>
+
+  <form id="eventForm">
+    <label>Event Title*</label>
+    <input type="text" id="title" required />
+
+    <label>Description</label>
+    <textarea id="description"></textarea>
+
+    <label>Date and Time*</label>
+    <input type="datetime-local" id="datetime" required />
+
+    <label>Email for Reminder</label>
+    <input type="email" id="email" />
+
+    <label>Category*</label>
+    <select id="category" required>
+      <option value="Birthday">Birthday</option>
+      <option value="Meeting">Meeting</option>
+      <option value="Holiday">Holiday</option>
+      <option value="Custom">Custom</option>
+    </select>
+
+    <button type="submit">Add Event</button>
+  </form>
+
+  <div id="eventList"></div>
+
+  <script>
+    const form = document.getElementById('eventForm');
+    const eventList = document.getElementById('eventList');
+    let events = JSON.parse(localStorage.getItem('events') || '[]');
+
+    function saveEvents() {
+      localStorage.setItem('events', JSON.stringify(events));
+    }
+
+    function renderEvents() {
+      eventList.innerHTML = '';
+      events.forEach((event, index) => {
+        const div = document.createElement('div');
+        div.className = `event-card category-${event.category}`;
+        const now = new Date();
+        const eventDate = new Date(event.datetime);
+        const timeLeft = eventDate - now;
+
+        let content = `<div class="title">${event.title}</div>`;
+        content += event.description ? `<p>${event.description}</p>` : '';
+        content += `<p><strong>Category:</strong> ${event.category}</p>`;
+        content += `<p><strong>Countdown:</strong> <span id="countdown-${index}"></span></p>`;
+        if (event.email) content += `<p><strong>Email Reminder:</strong> ${event.email}</p>`;
+
+        content += `
+          <div class="buttons">
+            <button onclick="deleteEvent(${index})">Delete</button>
+            <button onclick="editEvent(${index})">Edit</button>
+          </div>
+        `;
+
+        div.innerHTML = content;
+        eventList.appendChild(div);
+
+        updateCountdown(index, event.datetime, event.title);
+      });
+    }
+
+    function updateCountdown(index, datetime, title) {
+      const interval = setInterval(() => {
+        const now = new Date();
+        const eventTime = new Date(datetime);
+        const countdownEl = document.getElementById(`countdown-${index}`);
+
+        if (!countdownEl) {
+          clearInterval(interval);
+          return;
+        }
+
+        const diff = eventTime - now;
+
+        if (diff <= 0) {
+          countdownEl.innerHTML = `🎉 ${title} is happening now!`;
+          clearInterval(interval);
+        } else {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((diff / (1000 * 60)) % 60);
+          const seconds = Math.floor((diff / 1000) % 60);
+          countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+          // Simulate email reminder 1 day before
+          if (eventTime - now < 24 * 60 * 60 * 1000 + 1000 && eventTime - now > 24 * 60 * 60 * 1000 - 1000) {
+            const event = events[index];
+            if (event.email && !event.reminded) {
+              console.log(`Reminder: '${event.title}' is happening tomorrow. Email sent to: ${event.email}`);
+              alert(`Reminder for '${event.title}' sent to ${event.email}`);
+              events[index].reminded = true;
+              saveEvents();
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const datetime = document.getElementById('datetime').value;
+      const email = document.getElementById('email').value.trim();
+      const category = document.getElementById('category').value;
+
+      if (!title || !datetime || new Date(datetime) <= new Date()) {
+        alert('Please fill all required fields and ensure date is in the future.');
+        return;
+      }
+
+      events.push({ title, description, datetime, email, category, reminded: false });
+      saveEvents();
+      form.reset();
+      renderEvents();
+    });
+
+    window.deleteEvent = function(index) {
+      if (confirm('Are you sure you want to delete this event?')) {
+        events.splice(index, 1);
+        saveEvents();
+        renderEvents();
+      }
+    }
+
+    window.editEvent = function(index) {
+      const event = events[index];
+      document.getElementById('title').value = event.title;
+      document.getElementById('description').value = event.description;
+      document.getElementById('datetime').value = event.datetime;
+      document.getElementById('email').value = event.email;
+      document.getElementById('category').value = event.category;
+
+      events.splice(index, 1);
+      saveEvents();
+      renderEvents();
+    }
+
+    renderEvents();
+  </script>
+</body>
+</html>

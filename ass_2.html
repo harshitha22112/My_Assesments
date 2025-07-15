@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fashion Store</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #111;
+      color: white;
+      padding: 15px 30px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+    }
+
+    .nav-links a:hover {
+      color: #f39c12;
+    }
+
+    /* Banner */
+    .banner {
+      background-image: url('https://via.placeholder.com/1200x400');
+      background-size: cover;
+      background-position: center;
+      padding: 100px 20px;
+      text-align: center;
+      color: white;
+    }
+
+    .banner h1 {
+      font-size: 42px;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    /* Fashion Options */
+    .fashion-options {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .fashion-options h2 {
+      margin-bottom: 30px;
+      font-size: 32px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+    }
+
+    .option {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-5px);
+    }
+
+    /* Sales Section */
+    .sales {
+      padding: 40px 20px;
+      background-color: #f9f9f9;
+    }
+
+    .sales h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 28px;
+    }
+
+    .sales ul {
+      list-style: disc;
+      padding-left: 40px;
+      font-size: 18px;
+    }
+
+    /* Benefits Section */
+    .benefits {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .benefits h2 {
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    .benefit-list {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .benefit {
+      background-color: #e3f2fd;
+      padding: 20px;
+      border-radius: 8px;
+      width: 200px;
+      font-size: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Footer */
+    .footer {
+      background-color: #111;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">FASHION STORE</div>
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Shop</a></li>
+        <li><a href="#">Sales</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner">
+    <h1>It's Shopping Time! Refresh Your Style.</h1>
+  </section>
+
+  <!-- Fashion Options -->
+  <section class="fashion-options">
+    <h2>Explore Fashion</h2>
+    <div class="options-grid">
+      <div class="option">Men</div>
+      <div class="option">Women</div>
+      <div class="option">Kids</div>
+      <div class="option">Accessories</div>
+    </div>
+  </section>
+
+  <!-- Upcoming Sales -->
+  <section class="sales">
+    <h2>Upcoming Sales</h2>
+    <ul>
+      <li>Summer Sale - Up to 50% off (Starts July 15)</li>
+      <li>Back to School Sale - Aug 1 to Aug 10</li>
+      <li>Festive Sale - Coming Soon!</li>
+    </ul>
+  </section>
+
+  <!-- Benefits -->
+  <section class="benefits">
+    <h2>Why Shop with FASHION STORE?</h2>
+    <div class="benefit-list">
+      <div class="benefit">✅ Free Shipping</div>
+      <div class="benefit">✅ 24/7 Customer Support</div>
+      <div class="benefit">✅ Easy Returns</div>
+      <div class="benefit">✅ Latest Trends</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 FASHION STORE. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
